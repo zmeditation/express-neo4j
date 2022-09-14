@@ -1,18 +1,14 @@
 import express from "express";
-import { routeHandler } from "./router/route-handler";
-import { handleError, ResourceNotFound } from "./errors";
-import { getUser } from "./users/infrastructure/handlers/getUser";
-import { GetUser } from "./users/application/getUser";
-
+import { handleError } from "./errors";
+import { createModule as createUserModule } from "./users/index";
 const PORT = 8000;
 
 (function main() {
-  let app = express();
+  const app = express();
 
   app.get("/test", (_, res) => res.send("Hello world"));
 
-  const getUserController = getUser(new GetUser());
-  app.get("/user/:id", routeHandler(getUserController));
+  app.use("/users", createUserModule().router);
 
   app.use(handleError);
 
