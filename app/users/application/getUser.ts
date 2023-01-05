@@ -1,9 +1,4 @@
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-};
+import { User } from "../domain/models/user";
 
 export class GetUser {
   async execute(id: string): Promise<User> {
@@ -12,6 +7,7 @@ export class GetUser {
       firstName: "joe",
       lastName: "olley",
       email: "joe@nate.tech",
+      created: new Date(),
     };
   }
 }

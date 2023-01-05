@@ -8,10 +8,5 @@ export const getUser: GetUserController =
   (getUserService: GetUser) => async (req: Request, res: Response) => {
     const id = req.params.id;
     const result = await getUserService.execute(id);
-    return res.status(StatusCodes.OK).send({
-      Id: "123456",
-      firstName: "joe",
-      lastName: "olley",
-      email: "joe@nate.tech",
-    });
+    return res.status(StatusCodes.OK).send(result);
   };
