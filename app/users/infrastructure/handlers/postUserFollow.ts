@@ -1,5 +1,4 @@
-import { Request, RequestHandler, Response } from "express";
-import { StatusCodes } from "http-status-codes";
+import { Request, RequestHandler } from "express";
 import {
   PostUserFollow,
   PostUserFollowPayload,
@@ -10,12 +9,10 @@ type PostUserFollowController = (
 ) => RequestHandler;
 
 export const postUserFollow: PostUserFollowController =
-  (postUserFollowService: PostUserFollow) =>
-  async (req: Request, res: Response) => {
+  (postUserFollowService: PostUserFollow) => async (req: Request) => {
     const payload = req.body as PostUserFollowPayload;
-    const result = await postUserFollowService.execute({
+    return postUserFollowService.execute({
       actorId: payload.actorId,
       subjectId: payload.subjectId,
     });
-    return res.status(StatusCodes.OK).send(result);
   };

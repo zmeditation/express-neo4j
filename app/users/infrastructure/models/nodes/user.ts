@@ -1,11 +1,11 @@
-import { Node, Integer } from "neo4j-driver";
+import { Node, DateTime } from "neo4j-driver";
 
 interface UserProperties {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  created: Integer;
+  created: DateTime;
 }
 
 export interface UserNode extends Node {

@@ -11,6 +11,6 @@ export class PostUser {
   constructor(private readonly userRepository: UserRepository) {}
 
   async execute(userPayload: PostUserPayload): Promise<User> {
-    return await this.userRepository.create(userPayload);
+    return this.userRepository.create(userPayload);
   }
 }

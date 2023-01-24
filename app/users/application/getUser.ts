@@ -1,13 +1,10 @@
+import { UserRepository } from "../domain/interfaces/userRepository";
 import { User } from "../domain/models/user";
 
 export class GetUser {
+  constructor(private readonly userRepository: UserRepository) {}
+
   async execute(id: string): Promise<User> {
-    return {
-      id: "123456",
-      firstName: "joe",
-      lastName: "olley",
-      email: "joe@nate.tech",
-      created: new Date(),
-    };
+    return this.userRepository.getById(id);
   }
 }

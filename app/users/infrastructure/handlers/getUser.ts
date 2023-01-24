@@ -1,12 +1,10 @@
-import { Request, RequestHandler, Response } from "express";
-import { StatusCodes } from "http-status-codes";
+import { Request, RequestHandler } from "express";
 import { GetUser } from "../../application/getUser";
 
 type GetUserController = (getUserService: GetUser) => RequestHandler;
 
 export const getUser: GetUserController =
-  (getUserService: GetUser) => async (req: Request, res: Response) => {
+  (getUserService: GetUser) => async (req: Request) => {
     const id = req.params.id;
-    const result = await getUserService.execute(id);
-    return res.status(StatusCodes.OK).send(result);
+    return getUserService.execute(id);
   };

@@ -1,5 +1,5 @@
 import { UserRepository } from "../domain/interfaces/userRepository";
-import { User } from "../domain/models/user";
+import { Follows } from "../domain/models/follows";
 
 export type PostUserFollowPayload = {
   actorId: string;
@@ -12,7 +12,7 @@ export class PostUserFollow {
   async execute({
     actorId,
     subjectId,
-  }: PostUserFollowPayload): Promise<Boolean> {
-    return await this.userRepository.follow(actorId, subjectId);
+  }: PostUserFollowPayload): Promise<Follows> {
+    return this.userRepository.follow(actorId, subjectId);
   }
 }

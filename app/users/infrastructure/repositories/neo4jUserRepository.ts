@@ -1,8 +1,10 @@
-import { Driver } from "neo4j-driver";
+import { Driver, Path, Session } from "neo4j-driver";
 import { User } from "../../domain/models/user";
 import { UserNode } from "../models/nodes/user";
 import { v4 as uuid } from "uuid";
 import { UserRepository } from "../../domain/interfaces/userRepository";
+import { runQuery } from "../../../graph/runQuery";
+import { Follows } from "../../domain/models/follows";
 
 export class Neo4jUserRepository implements UserRepository {
   constructor(private readonly driver: Driver) {}
@@ -16,7 +18,20 @@ export class Neo4jUserRepository implements UserRepository {
       email: node.properties.email,
       firstName: node.properties.firstName,
       lastName: node.properties.lastName,
-      created: node.properties.created.toNumber(),
+      created: node.properties.created.toString(),
+    };
+  }
+
+  mapToRelationship(path: Path): Follows {
+    const segment = path.segments[0];
+    if (segment.relationship.type !== "FOLLOWS") {
+      throw new Error("Invalid path relationship type, expecting 'FOLLOWS'");
+    }
+    return {
+      actorId: segment.start.properties.id,
+      subjectId: segment.end.properties.id,
+      type: segment.relationship.type,
+      created: segment.relationship.properties.created.toString(),
     };
   }
 
@@ -25,57 +40,70 @@ export class Neo4jUserRepository implements UserRepository {
     firstName: string;
     lastName: string;
   }): Promise<User> {
-    const session = this.driver.session();
-    try {
-      const query = `
-        MERGE (user:User {email: $email }) 
-        ON CREATE SET
-          user.id = $id,
-          user.firstName = $firstName,
-          user.lastName = $lastName,
-          user.created = $created
-        RETURN user`;
-      const params = {
-        id: "12345",
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        created: 1665690371850,
-      };
-      const result = await session.writeTransaction((tx) =>
-        tx.run(query, params)
-      );
-      // const result = await session.executeWrite((tx) => tx.run(query, params));
-      console.log("RESULT", JSON.stringify(result));
+    const query = `
+    MERGE (user:User {email: $email }) 
+    ON CREATE SET
+      user.id = $id,
+      user.firstName = $firstName,
+      user.lastName = $lastName,
+      user.created = datetime()
+    RETURN user`;
+    const params = {
+      id: uuid(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+    return runQuery<User>(this.driver, async (session: Session) => {
+      const result = await session.executeWrite((tx) => tx.run(query, params));
       const userNode: UserNode = result.records[0].get("user");
       return this.mapToUser(userNode);
-    } finally {
-      await session.close();
-    }
+    });
   }
 
-  async follow(actorId: string, subjectId: string): Promise<boolean> {
-    const session = this.driver.session();
-    try {
-      const query = `
+  async getById(id: string) {
+    const query = `
+        MATCH (user)
+        WHERE user.id = $id
+        RETURN user`;
+    const params = { id };
+    return runQuery<User>(this.driver, async (session: Session) => {
+      const result = await session.executeRead((tx) => tx.run(query, params));
+      const userNode: UserNode = result.records[0].get("user");
+      return this.mapToUser(userNode);
+    });
+  }
+
+  async getByEmail(email: string) {
+    const query = `
+        MATCH (user)
+        WHERE user.email = $email
+        RETURN user`;
+    const params = { email };
+
+    return runQuery<User>(this.driver, async (session: Session) => {
+      const result = await session.executeRead((tx) => tx.run(query, params));
+      const userNode: UserNode = result.records[0].get("user");
+      return this.mapToUser(userNode);
+    });
+  }
+
+  async follow(actorId: string, subjectId: string): Promise<Follows> {
+    const query = `
         MATCH
           (actor:User {id: $actorId }),
           (subject:User {id: $subjectId })
-        MERGE res =
+        MERGE relationship =
           (actor)-[rel:FOLLOWS]->(subject)
         ON CREATE SET
-          rel.created = $created
-        RETURN res`;
-      const params = {
-        actorId,
-        subjectId,
-        created: Date.now(),
-      };
+          rel.created = datetime()
+        RETURN relationship`;
+    const params = { actorId, subjectId };
+
+    return runQuery<Follows>(this.driver, async (session: Session) => {
       const result = await session.executeWrite((tx) => tx.run(query, params));
-      const relation = result.records[0].get("res");
-      return relation;
-    } finally {
-      await session.close();
-    }
+      const relation: Path = result.records[0].get("relationship");
+      return this.mapToRelationship(relation);
+    });
   }
 }
