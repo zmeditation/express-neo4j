@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import { Router } from "express";
 import { Driver } from "neo4j-driver";
 import { routeHandler } from "../router/route-handler";
 import { GetUser } from "./application/getUser";
@@ -9,23 +9,22 @@ import { postUser } from "./infrastructure/handlers/postUser";
 import { postUserFollow } from "./infrastructure/handlers/postUserFollow";
 import { Neo4jUserRepository } from "./infrastructure/repositories/neo4jUserRepository";
 
-const router = express.Router();
-
-type UserModule = {
-  router: Router;
+type Dependencies = {
+  graphDriver: Driver;
 };
 
-export function createModule(graphDriver: Driver): UserModule {
+export function createModule(
+  router: Router,
+  { graphDriver }: Dependencies
+): void {
   const neo4jRepository = new Neo4jUserRepository(graphDriver);
-  const getUserController = getUser(new GetUser());
+  const getUserController = getUser(new GetUser(neo4jRepository));
   const postUserController = postUser(new PostUser(neo4jRepository));
   const postUserFollowController = postUserFollow(
     new PostUserFollow(neo4jRepository)
   );
 
-  router.get("/:id(\\d{6})", routeHandler(getUserController));
-  router.post("/", routeHandler(postUserController));
-  router.post("/follow", routeHandler(postUserFollowController));
-
-  return { router };
+  router.get("/users/:id([a-z0-9-]{36})", routeHandler(getUserController));
+  router.post("/users", routeHandler(postUserController));
+  router.post("/users/follow", routeHandler(postUserFollowController));
 }
