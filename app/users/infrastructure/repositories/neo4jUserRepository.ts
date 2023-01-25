@@ -1,7 +1,7 @@
 import { Driver, Session } from "neo4j-driver";
 import { v4 as uuid } from "uuid";
 
-import { runQuery } from "../../../graph/runQuery";
+import { openSession } from "../../../graph/openSession";
 import * as Nodes from "../models/nodes";
 import * as QueryResults from "../models/queryResults";
 import { User } from "../../domain/models/user";
@@ -58,7 +58,7 @@ export class Neo4jUserRepository implements UserRepository {
       firstName: user.firstName,
       lastName: user.lastName,
     };
-    return runQuery<User>(this.driver, async (session: Session) => {
+    return openSession<User>(this.driver, async (session: Session) => {
       const result = await session.executeWrite((tx) =>
         tx.run<QueryResults.User>(query, params)
       );
@@ -73,7 +73,7 @@ export class Neo4jUserRepository implements UserRepository {
       WHERE user.id = $id
       RETURN user`;
     const params = { id };
-    return runQuery<User>(this.driver, async (session: Session) => {
+    return openSession<User>(this.driver, async (session: Session) => {
       const result = await session.executeRead((tx) =>
         tx.run<QueryResults.User>(query, params)
       );
@@ -94,7 +94,7 @@ export class Neo4jUserRepository implements UserRepository {
       RETURN actor, relationship, subject`;
     const params = { actorId, subjectId };
 
-    return runQuery<Follows>(this.driver, async (session: Session) => {
+    return openSession<Follows>(this.driver, async (session: Session) => {
       const result = await session.executeWrite((tx) =>
         tx.run<QueryResults.Follow>(query, params)
       );
