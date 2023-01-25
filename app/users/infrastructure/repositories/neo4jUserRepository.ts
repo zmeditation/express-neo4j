@@ -1,17 +1,19 @@
-import { Driver, Path, Session } from "neo4j-driver";
-import { User } from "../../domain/models/user";
-import { UserNode } from "../models/nodes/user";
+import { Driver, Session } from "neo4j-driver";
 import { v4 as uuid } from "uuid";
-import { UserRepository } from "../../domain/interfaces/userRepository";
+
 import { runQuery } from "../../../graph/runQuery";
+import * as Nodes from "../models/nodes";
+import * as QueryResults from "../models/queryResults";
+import { User } from "../../domain/models/user";
 import { Follows } from "../../domain/models/follows";
+import { UserRepository } from "../../domain/interfaces/userRepository";
 
 export class Neo4jUserRepository implements UserRepository {
   constructor(private readonly driver: Driver) {}
 
-  mapToUser(node: UserNode): User {
-    if (!node.labels.includes("User")) {
-      throw new Error("Invalid node type, expecting 'User'");
+  mapToUser(node: Nodes.User): User {
+    if (!node) {
+      throw new Error(`Unable to map node: ${node} to user `);
     }
     return {
       id: node.properties.id,
@@ -22,16 +24,18 @@ export class Neo4jUserRepository implements UserRepository {
     };
   }
 
-  mapToRelationship(path: Path): Follows {
-    const segment = path.segments[0];
-    if (segment.relationship.type !== "FOLLOWS") {
-      throw new Error("Invalid path relationship type, expecting 'FOLLOWS'");
+  mapToFollowsRelationship(queryResult: QueryResults.Follow): Follows {
+    if (!queryResult) {
+      throw new Error(
+        `Unable to map query result ${queryResult} to follows relationship`
+      );
     }
+    const { actor, relationship, subject } = queryResult;
     return {
-      actorId: segment.start.properties.id,
-      subjectId: segment.end.properties.id,
-      type: segment.relationship.type,
-      created: segment.relationship.properties.created.toString(),
+      actorId: actor.properties.id,
+      subjectId: subject.properties.id,
+      type: relationship.type,
+      created: relationship.properties.created.toString(),
     };
   }
 
@@ -41,13 +45,13 @@ export class Neo4jUserRepository implements UserRepository {
     lastName: string;
   }): Promise<User> {
     const query = `
-    MERGE (user:User {email: $email }) 
-    ON CREATE SET
-      user.id = $id,
-      user.firstName = $firstName,
-      user.lastName = $lastName,
-      user.created = datetime()
-    RETURN user`;
+      MERGE (user:User {email: $email }) 
+      ON CREATE SET
+        user.id = $id,
+        user.firstName = $firstName,
+        user.lastName = $lastName,
+        user.created = datetime()
+      RETURN user`;
     const params = {
       id: uuid(),
       email: user.email,
@@ -55,55 +59,47 @@ export class Neo4jUserRepository implements UserRepository {
       lastName: user.lastName,
     };
     return runQuery<User>(this.driver, async (session: Session) => {
-      const result = await session.executeWrite((tx) => tx.run(query, params));
-      const userNode: UserNode = result.records[0].get("user");
-      return this.mapToUser(userNode);
+      const result = await session.executeWrite((tx) =>
+        tx.run<QueryResults.User>(query, params)
+      );
+      const users = result.records.map((record) => record.get("user"));
+      return this.mapToUser(users[0]);
     });
   }
 
   async getById(id: string) {
     const query = `
-        MATCH (user)
-        WHERE user.id = $id
-        RETURN user`;
+      MATCH (user)
+      WHERE user.id = $id
+      RETURN user`;
     const params = { id };
     return runQuery<User>(this.driver, async (session: Session) => {
-      const result = await session.executeRead((tx) => tx.run(query, params));
-      const userNode: UserNode = result.records[0].get("user");
-      return this.mapToUser(userNode);
-    });
-  }
-
-  async getByEmail(email: string) {
-    const query = `
-        MATCH (user)
-        WHERE user.email = $email
-        RETURN user`;
-    const params = { email };
-
-    return runQuery<User>(this.driver, async (session: Session) => {
-      const result = await session.executeRead((tx) => tx.run(query, params));
-      const userNode: UserNode = result.records[0].get("user");
-      return this.mapToUser(userNode);
+      const result = await session.executeRead((tx) =>
+        tx.run<QueryResults.User>(query, params)
+      );
+      const users = result.records.map((record) => record.get("user"));
+      return this.mapToUser(users[0]);
     });
   }
 
   async follow(actorId: string, subjectId: string): Promise<Follows> {
     const query = `
-        MATCH
-          (actor:User {id: $actorId }),
-          (subject:User {id: $subjectId })
-        MERGE relationship =
-          (actor)-[rel:FOLLOWS]->(subject)
-        ON CREATE SET
-          rel.created = datetime()
-        RETURN relationship`;
+      MATCH
+        (actor:User {id: $actorId }),
+        (subject:User {id: $subjectId })
+      MERGE path =
+        (actor)-[relationship:FOLLOWS]->(subject)
+      ON CREATE SET
+        relationship.created = datetime()
+      RETURN actor, relationship, subject`;
     const params = { actorId, subjectId };
 
     return runQuery<Follows>(this.driver, async (session: Session) => {
-      const result = await session.executeWrite((tx) => tx.run(query, params));
-      const relation: Path = result.records[0].get("relationship");
-      return this.mapToRelationship(relation);
+      const result = await session.executeWrite((tx) =>
+        tx.run<QueryResults.Follow>(query, params)
+      );
+      const records = result.records.map((record) => record.toObject());
+      return this.mapToFollowsRelationship(records[0]);
     });
   }
 }

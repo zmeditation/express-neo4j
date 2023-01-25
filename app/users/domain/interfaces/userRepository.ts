@@ -3,7 +3,6 @@ import { User } from "../models/user";
 
 export interface UserRepository {
   getById: (id: string) => Promise<User>;
-  getByEmail: (email: string) => Promise<User>;
   create: (user: {
     email: string;
     firstName: string;
