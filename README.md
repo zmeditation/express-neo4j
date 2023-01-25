@@ -8,13 +8,13 @@ This repo includes a node/express/neo4j api that exposes the following endpoints
 - GET /v1/users/:id
 - POST /v1/users/follow
 
-It uses DI and hexagonal architecture to achieve loose coupling between infra and application layers. The architecture pattern was used for demonstration purpose - the domain is not complex enough to warrent it.
+It uses DI and hexagonal architecture to achieve loose coupling between infra and application layers. The architecture pattern was used for demonstration purpose - the domain is not complex enough to warrant it.
 
 #### Local Development
 
 To run project locally you will need to create a Neo4j account and free tier Aura instance [here](https://login.neo4j.com/u/login/identifier?state=hKFo2SBtN1kwLWpTbWpXOFJYOXM3SFBLQ2VpVGRvWUpBdWpuSKFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIHlFajZ4U2F2am5yYWkybVBsRkJDT1RDZFQ5blFrUUZWo2NpZNkgV1NMczYwNDdrT2pwVVNXODNnRFo0SnlZaElrNXpZVG8)
 
-Create a .env in the root of the project using the .env.example as a template. You will need details of your Neo4j Aura instance to complete this step.
+Create a .env file in the root of the project using the .env.example as a template. You will need details of your Neo4j Aura instance to complete this step.
 
 To run the api
 
@@ -56,3 +56,10 @@ curl --request POST \
 	"subjectId": <subjectId>
 }'
 ```
+
+#### TODOs
+
+- [ ] explore [neo-forgery](https://github.com/YizYah/neo-forgery) and other neo4j testing utils
+- [ ] explore [neo4j-graphql library](https://neo4j.com/developer/graphql/)
+- [ ] dockerize and deploy to local k8s cluster
+- [ ] build out domain and seed for performance testing
