@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-export { handleError } from "./handler";
 
 class CustomError extends Error {
   constructor(readonly code: number) {

@@ -4,7 +4,7 @@ import {
   QuerySpec,
   StoredResponse,
 } from "neo-forgery";
-import { Neo4jUserRepository } from "../../app/users/infrastructure/repositories/neo4jUserRepository";
+import { Neo4jUserRepository } from "../../src/users/infrastructure/repositories/neo4jUserRepository";
 import { anyFunction, instance, mock, when } from "ts-mockito";
 import { Driver, QueryResult, Record, Session } from "neo4j-driver";
 

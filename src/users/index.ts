@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Driver } from "neo4j-driver";
-import { routeHandler } from "../router/route-handler";
+import { routeHandler } from "../utils/middleware/routeHandler";
 import { GetUser } from "./application/getUser";
 import { PostUser } from "./application/postUser";
 import { PostUserFollow } from "./application/postUserFollow";

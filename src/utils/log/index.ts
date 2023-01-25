@@ -7,7 +7,7 @@ const ignorePrivate = format((info) => {
   return info;
 });
 
-export const logger = createLogger({
+export const log = createLogger({
   transports: [
     new transports.Console({
       level: "info",

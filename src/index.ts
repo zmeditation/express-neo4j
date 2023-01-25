@@ -1,8 +1,8 @@
 import express from "express";
-import { createConfig } from "./config";
-import { handleError } from "./errors";
-import { createDriver } from "./graph/driver";
-import { logger } from "./logger";
+import { createConfig } from "./utils/config";
+import { createDriver } from "./utils/graph";
+import { log } from "./utils/log";
+import { handleError } from "./utils/middleware/errorHandler";
 import { createModule as createUserModule } from "./users/index";
 
 (async function main() {
@@ -23,6 +23,6 @@ import { createModule as createUserModule } from "./users/index";
   app.use(handleError);
 
   app.listen(config.port, () =>
-    logger.info(`server listening on http://localhost:${config.port}`)
+    log.info(`server listening on http://localhost:${config.port}`)
   );
 })();

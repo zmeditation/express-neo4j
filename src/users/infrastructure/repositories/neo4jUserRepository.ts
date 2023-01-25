@@ -1,7 +1,7 @@
 import { Driver, Session } from "neo4j-driver";
 import { v4 as uuid } from "uuid";
 
-import { openSession } from "../../../graph/openSession";
+import { openSession } from "../../../utils/graph/openSession";
 import * as Nodes from "../models/nodes";
 import * as QueryResults from "../models/queryResults";
 import { User } from "../../domain/models/user";

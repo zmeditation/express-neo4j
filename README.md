@@ -59,6 +59,7 @@ curl --request POST \
 
 #### TODOs
 
+- [ ] inject request scoped logger
 - [ ] explore [neo-forgery](https://github.com/YizYah/neo-forgery) and other neo4j testing utils
 - [ ] explore [neo4j-graphql library](https://neo4j.com/developer/graphql/)
 - [ ] dockerize and deploy to local k8s cluster
